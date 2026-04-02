@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dave &amp; Eryn — October 10, 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sand:    #f5ede0;
+      --shell:   #fffaf4;
+      --ocean:   #2a6b7c;
+      --ocean-lt:#4a9ab0;
+      --coral:   #d9735a;
+      --palm:    #4a6741;
+      --gold:    #c8a96e;
+      --text:    #2e2620;
+      --muted:   #7a6a5a;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Jost', sans-serif;
+      background: var(--shell);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ── NAVIGATION ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: center;
+      gap: 2.5rem;
+      padding: 1.1rem 2rem;
+      background: rgba(255,250,244,0.88);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(200,169,110,0.25);
+    }
+    nav a {
+      text-decoration: none;
+      font-family: 'Jost', sans-serif;
+      font-weight: 400;
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      transition: color 0.2s;
+    }
+    nav a:hover { color: var(--ocean); }
+
+    /* ── HERO ── */
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      overflow: hidden;
+      padding: 6rem 2rem 4rem;
+    }
+
+    /* Layered gradient sky + ocean */
+    #hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, #ffe8c8 0%, transparent 70%),
+        linear-gradient(180deg,
+          #ffd9a0 0%,
+          #f5a96e 20%,
+          #e07050 36%,
+          #b84a38 50%,
+          #6a3040 62%,
+          #2a3060 76%,
+          #1a2050 100%);
+      z-index: 0;
+    }
+
+    /* SVG wave + palm silhouettes */
+    #hero-bottom {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      z-index: 2;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 3;
+    }
+
+    .hero-eyebrow {
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      font-size: 0.78rem;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: rgba(255,230,180,0.9);
+      margin-bottom: 1.4rem;
+    }
+
+    .hero-names {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-size: clamp(4rem, 12vw, 9rem);
+      line-height: 0.9;
+      color: #fff;
+      text-shadow: 0 2px 40px rgba(0,0,0,0.3);
+      margin-bottom: 1.2rem;
+    }
+    .hero-names span { display: block; }
+    .hero-names .amp {
+      font-style: italic;
+      font-size: 0.55em;
+      color: rgba(255,220,150,0.95);
+      display: inline-block;
+      line-height: 1.4;
+    }
+
+    .hero-date {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: clamp(1.2rem, 3vw, 1.8rem);
+      color: rgba(255,230,180,0.95);
+      letter-spacing: 0.06em;
+      margin-bottom: 0.6rem;
+    }
+
+    .hero-location {
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      font-size: 0.9rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255,210,150,0.85);
+    }
+
+    .scroll-cue {
+      position: relative;
+      z-index: 3;
+      margin-top: 3.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      color: rgba(255,230,180,0.6);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      animation: bob 2s ease-in-out infinite;
+    }
+    .scroll-cue svg { width: 20px; opacity: 0.6; }
+    @keyframes bob {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(6px); }
+    }
+
+    /* ── DIVIDER LEAF ── */
+    .divider {
+      text-align: center;
+      padding: 1rem 0;
+      font-size: 1.5rem;
+      color: var(--gold);
+      opacity: 0.6;
+    }
+
+    /* ── SECTION BASE ── */
+    section {
+      padding: 6rem 2rem;
+      max-width: 860px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .section-label {
+      font-family: 'Jost', sans-serif;
+      font-weight: 400;
+      font-size: 0.72rem;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--coral);
+      margin-bottom: 1.2rem;
+    }
+
+    h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-size: clamp(2.2rem, 5vw, 3.4rem);
+      color: var(--ocean);
+      margin-bottom: 1.6rem;
+      line-height: 1.15;
+    }
+
+    p {
+      font-size: 1.05rem;
+      line-height: 1.85;
+      color: var(--muted);
+      max-width: 620px;
+      margin: 0 auto 1.2rem;
+    }
+
+    /* ── DETAILS ── */
+    #details { background: var(--sand); border-radius: 0; }
+
+    .details-wrap {
+      background: var(--ocean);
+      border-radius: 24px;
+      padding: 3.5rem 2.5rem;
+      max-width: 720px;
+      margin: 2.5rem auto 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle wave overlay inside card */
+    .details-wrap::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 80px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 80'%3E%3Cpath d='M0,40 C200,80 400,0 600,40 C800,80 1000,0 1200,40 L1200,80 L0,80 Z' fill='rgba(255,255,255,0.05)'/%3E%3C/svg%3E") no-repeat bottom;
+      background-size: cover;
+    }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      position: relative;
+      z-index: 1;
+    }
+    @media (max-width: 600px) { .details-grid { grid-template-columns: 1fr; } }
+
+    .detail-item {
+      text-align: center;
+    }
+    .detail-icon { font-size: 1.8rem; margin-bottom: 0.7rem; }
+    .detail-label {
+      font-family: 'Jost', sans-serif;
+      font-weight: 400;
+      font-size: 0.68rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 0.4rem;
+    }
+    .detail-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem;
+      color: #fff;
+      line-height: 1.3;
+    }
+    .detail-sub {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.6);
+      margin-top: 0.2rem;
+      font-family: 'Jost', sans-serif;
+    }
+
+    /* ── RSVP ── */
+    #rsvp { background: var(--shell); }
+
+    .rsvp-box {
+      background: linear-gradient(135deg, var(--coral) 0%, #c06040 100%);
+      border-radius: 24px;
+      padding: 3rem 2.5rem;
+      max-width: 560px;
+      margin: 2rem auto 0;
+      color: #fff;
+    }
+    .rsvp-box h2 { color: #fff; margin-bottom: 0.8rem; }
+    .rsvp-box p { color: rgba(255,255,255,0.85); margin-bottom: 2rem; }
+
+    .btn {
+      display: inline-block;
+      padding: 0.85rem 2.4rem;
+      background: #fff;
+      color: var(--coral);
+      font-family: 'Jost', sans-serif;
+      font-weight: 500;
+      font-size: 0.82rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border-radius: 50px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    }
+
+    /* ── REGISTRY ── */
+    #registry { background: var(--sand); }
+
+    .registry-grid {
+      display: flex;
+      justify-content: center;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+      margin-top: 2rem;
+    }
+    .registry-card {
+      background: var(--shell);
+      border: 1.5px solid rgba(200,169,110,0.3);
+      border-radius: 16px;
+      padding: 1.8rem 2.2rem;
+      text-align: center;
+      text-decoration: none;
+      color: var(--text);
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      min-width: 180px;
+    }
+    .registry-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 32px rgba(42,107,124,0.12);
+      border-color: var(--ocean-lt);
+    }
+    .registry-card .r-icon { font-size: 2rem; margin-bottom: 0.6rem; }
+    .registry-card .r-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem;
+      color: var(--ocean);
+    }
+    .registry-note {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      font-style: italic;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 3rem 2rem;
+      background: #1a2050;
+      color: rgba(255,255,255,0.45);
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+    }
+    footer strong {
+      display: block;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: 1.4rem;
+      color: rgba(255,220,150,0.7);
+      margin-bottom: 0.5rem;
+    }
+
+    /* ── TRAVEL ── */
+    #travel { background: var(--shell); }
+
+    .travel-intro { max-width: 620px; margin: 0 auto 3rem; }
+
+    .walk-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+      max-width: 680px;
+      margin: 0 auto 3rem;
+    }
+    @media (max-width: 560px) { .walk-cards { grid-template-columns: 1fr; } }
+
+    .walk-card {
+      background: var(--sand);
+      border-radius: 16px;
+      padding: 1.6rem 1.8rem;
+      text-align: center;
+    }
+    .walk-card .wc-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .walk-card h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.25rem;
+      color: var(--ocean);
+      margin-bottom: 0.3rem;
+    }
+    .walk-card p { font-size: 0.9rem; margin: 0; }
+
+    .our-place-card {
+      background: var(--ocean);
+      color: #fff;
+      border-radius: 20px;
+      padding: 2rem 2.2rem;
+      max-width: 680px;
+      margin: 0 auto 3rem;
+      text-align: left;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 1.4rem;
+      align-items: center;
+    }
+    @media (max-width: 560px) {
+      .our-place-card { grid-template-columns: 1fr; text-align: center; }
+    }
+    .our-place-card .op-icon { font-size: 2.8rem; }
+    .our-place-card h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem;
+      color: rgba(255,220,150,0.95);
+      margin-bottom: 0.3rem;
+    }
+    .our-place-card p { color: rgba(255,255,255,0.8); font-size: 0.92rem; margin: 0 0 0.2rem; }
+    .our-place-card .op-address {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.8);
+      letter-spacing: 0.04em;
+      font-weight: 400;
+    }
+
+    .map-wrap {
+      border-radius: 20px;
+      overflow: hidden;
+      max-width: 860px;
+      margin: 0 auto 2.5rem;
+      box-shadow: 0 8px 40px rgba(42,107,124,0.15);
+      border: 3px solid rgba(200,169,110,0.25);
+    }
+    #leaflet-map {
+      width: 100%;
+      height: 420px;
+    }
+
+    .vrbo-link-wrap {
+      text-align: center;
+      margin-top: 0.5rem;
+    }
+    .btn-outline {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.8rem 2rem;
+      border: 2px solid var(--ocean);
+      color: var(--ocean);
+      font-family: 'Jost', sans-serif;
+      font-weight: 500;
+      font-size: 0.82rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border-radius: 50px;
+      transition: background 0.2s, color 0.2s, transform 0.2s;
+    }
+    .btn-outline:hover {
+      background: var(--ocean);
+      color: #fff;
+      transform: translateY(-2px);
+    }
+
+    /* ── FADE IN ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#details">Details</a>
+  <a href="#travel">Travel</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-content">
+    <p class="hero-eyebrow">We're getting married</p>
+    <h1 class="hero-names">
+      <span>Dave</span>
+      <span class="amp">&amp;</span>
+      <span>Eryn</span>
+    </h1>
+    <p class="hero-date">October 10, 2026</p>
+    <p class="hero-location">Shipwreck Beach · Kauai, Hawaiʻi</p>
+  </div>
+
+  <div class="scroll-cue">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M12 5v14M5 12l7 7 7-7"/>
+    </svg>
+    Scroll
+  </div>
+
+  <!-- SVG palms + wave at bottom of hero -->
+  <div id="hero-bottom">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 200" preserveAspectRatio="none"
+         style="display:block;width:100%;height:160px;">
+      <!-- water waves -->
+      <path d="M0,120 C200,80 400,160 600,120 C800,80 1000,160 1200,120 C1300,100 1350,110 1400,120 L1400,200 L0,200 Z"
+            fill="#f5ede0"/>
+      <path d="M0,140 C150,110 350,170 550,140 C750,110 950,170 1150,140 C1280,120 1340,135 1400,140 L1400,200 L0,200 Z"
+            fill="#fffaf4" opacity="0.7"/>
+
+      <!-- left palm -->
+      <g transform="translate(60,10)">
+        <rect x="18" y="80" width="7" height="100" rx="3" fill="#2e3a1a" opacity="0.7"/>
+        <!-- fronds -->
+        <path d="M22,80 Q-10,50 -40,30 Q-10,60 22,82" fill="#3a5a28" opacity="0.8"/>
+        <path d="M22,80 Q10,40 30,10 Q30,50 22,82" fill="#4a6a30" opacity="0.8"/>
+        <path d="M22,80 Q50,50 70,28 Q45,58 22,82" fill="#3a5a28" opacity="0.8"/>
+        <path d="M22,80 Q0,60 -20,50 Q5,68 22,82" fill="#4a6a30" opacity="0.7"/>
+        <path d="M22,80 Q40,60 55,52 Q35,66 22,82" fill="#3a5a28" opacity="0.7"/>
+      </g>
+
+      <!-- right palm -->
+      <g transform="translate(1280,0) scale(-1,1)">
+        <rect x="18" y="80" width="7" height="110" rx="3" fill="#2e3a1a" opacity="0.7"/>
+        <path d="M22,80 Q-10,50 -40,30 Q-10,60 22,82" fill="#3a5a28" opacity="0.8"/>
+        <path d="M22,80 Q10,40 30,10 Q30,50 22,82" fill="#4a6a30" opacity="0.8"/>
+        <path d="M22,80 Q50,50 70,28 Q45,58 22,82" fill="#3a5a28" opacity="0.8"/>
+        <path d="M22,80 Q0,60 -20,50 Q5,68 22,82" fill="#4a6a30" opacity="0.7"/>
+        <path d="M22,80 Q40,60 55,52 Q35,66 22,82" fill="#3a5a28" opacity="0.7"/>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<!-- DETAILS -->
+<section id="details" style="background:var(--sand);max-width:100%;padding:6rem 2rem;">
+  <div style="max-width:860px;margin:0 auto;text-align:center;">
+    <div class="reveal">
+      <p class="section-label">🗓 Save the date</p>
+      <h2>Event Details</h2>
+      <p>Join us on the golden shores of Shipwreck Beach for a ceremony at sunset, followed by an evening of celebration, music, and aloha.</p>
+    </div>
+
+    <div class="details-wrap reveal">
+      <div class="details-grid">
+        <div class="detail-item">
+          <div class="detail-icon">📅</div>
+          <div class="detail-label">Date</div>
+          <div class="detail-value">October 10<br>2026</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-icon">⏰</div>
+          <div class="detail-label">Time</div>
+          <div class="detail-value">4:00 PM</div>
+          <div class="detail-sub">Ceremony at sunset</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-icon">📍</div>
+          <div class="detail-label">Location</div>
+          <div class="detail-value">Shipwreck Beach</div>
+          <div class="detail-sub">Kauai, Hawaiʻi</div>
+        </div>
+      </div>
+    </div>
+
+    <p class="reveal" style="margin-top:2rem;font-style:italic;font-size:0.9rem;">
+      Dress code: Tropical / Beach Formal — florals and linen encouraged 🌸
+    </p>
+
+    <div class="reveal" style="margin-top:2.5rem;background:rgba(200,169,110,0.15);border:1.5px solid rgba(200,169,110,0.35);border-radius:16px;padding:1.4rem 2rem;max-width:560px;margin-left:auto;margin-right:auto;">
+      <p style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.2rem;color:var(--ocean);margin:0;">
+        🥂 Reception details to follow
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- TRAVEL -->
+<section id="travel" style="max-width:100%;padding:6rem 2rem;">
+  <div style="max-width:860px;margin:0 auto;text-align:center;">
+
+    <div class="reveal">
+      <p class="section-label">🌴 Getting here</p>
+      <h2>Travel &amp; Accommodation</h2>
+    </div>
+
+    <!-- Our place blurb -->
+    <div class="our-place-card reveal">
+      <div class="op-icon">🏡</div>
+      <div>
+        <h3>Where we'll be staying</h3>
+        <p>We're set up in a beautiful spot in Poipū — right in the sweet spot between two incredible beaches. Both Poipū Beach and Shipwreck Beach are just a short stroll away.</p>
+        <p class="op-address">2440 Linaka Rd, Koloa, HI 96756</p>
+      </div>
+    </div>
+
+    <!-- Walk-time cards -->
+    <div class="walk-cards reveal">
+      <div class="walk-card">
+        <div class="wc-icon">🌊</div>
+        <h3>Shipwreck Beach</h3>
+        <p>~15 min walk · Where the ceremony takes place. Rocky, dramatic, and completely unforgettable.</p>
+      </div>
+      <div class="walk-card">
+        <div class="wc-icon">🏖️</div>
+        <h3>Poipū Beach</h3>
+        <p>~15 min walk · A classic Hawaiian beach with calm waters — perfect for a morning swim.</p>
+      </div>
+    </div>
+
+    <!-- Map -->
+    <div class="map-wrap reveal">
+      <div id="leaflet-map"></div>
+    </div>
+
+    <!-- Accommodation links -->
+    <div class="vrbo-link-wrap reveal">
+      <p style="margin-bottom:1.4rem;font-size:0.95rem;">Looking for a place to stay nearby? We've pre-filtered both Airbnb and VRBO to the week of the wedding, right in the Poipū area.</p>
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:1rem;">
+        <a
+          href="https://www.airbnb.com/s/Poipu-Beach/homes?refinement_paths%5B%5D=%2Fhomes&place_id=ChIJW01WxZcaB3wRg0DxUhvIqC8&acp_id=e837be02-7949-440b-8c97-16d74fadc9d4&date_picker_type=calendar&checkin=2026-10-07&checkout=2026-10-14&adults=2&search_type=user_map_move&query=Poipu%20Beach&flexible_trip_lengths%5B%5D=one_week&monthly_start_date=2026-05-01&monthly_length=3&monthly_end_date=2026-08-01&search_mode=regular_search&price_filter_input_type=2&price_filter_num_nights=7&channel=EXPLORE&ne_lat=21.880851385145466&ne_lng=-159.4383936140041&sw_lat=21.865511265110218&sw_lng=-159.45383988805565&zoom=15.696015131686753&zoom_level=15.696015131686753&search_by_map=true"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn-outline">
+          🌸 Browse stays on Airbnb
+        </a>
+        <a
+          href="https://www.vrbo.com/search?latLong=21.87338%2C-159.4464&mapBounds=21.8593%2C-159.45749&mapBounds=21.88746%2C-159.4353&startDate=2026-10-07&endDate=2026-10-14&adults=2&sort=PRICE_LOW_TO_HIGH"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn-outline">
+          🏠 Browse stays on VRBO
+        </a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <strong>Dave &amp; Eryn · October 10, 2026</strong>
+  Shipwreck Beach · Kauai, Hawaiʻi &nbsp;·&nbsp; With aloha ❤️
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+  // ── LEAFLET MAP ──
+  const map = L.map('leaflet-map', { scrollWheelZoom: false }).setView([21.877, -159.441], 14);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 19
+  }).addTo(map);
+
+  // Custom icon factory
+  function makeIcon(color) {
+    return L.divIcon({
+      className: '',
+      html: `<div style="
+        background:${color};border:3px solid #fff;border-radius:50% 50% 50% 0;
+        width:26px;height:26px;transform:rotate(-45deg);
+        box-shadow:0 2px 8px rgba(0,0,0,0.3);">
+      </div>`,
+      iconSize: [26, 26],
+      iconAnchor: [13, 26],
+      popupAnchor: [0, -28]
+    });
+  }
+
+  // Ceremony – Shipwreck Beach
+  L.marker([21.8823, -159.4319], { icon: makeIcon('#d9735a') })
+    .addTo(map)
+    .bindPopup('<strong>⚓ Shipwreck Beach</strong><br>Ceremony · 4:00 PM')
+    .openPopup();
+
+  // Their place
+  L.marker([21.8730, -159.4462], { icon: makeIcon('#2a6b7c') })
+    .addTo(map)
+    .bindPopup('<strong>🏡 Dave &amp; Eryn\'s Place</strong><br>2440 Linaka Rd, Koloa');
+
+  // Poipū Beach
+  L.marker([21.8715, -159.4535], { icon: makeIcon('#4a6741') })
+    .addTo(map)
+    .bindPopup('<strong>🏖️ Poipū Beach</strong>');
+
+  // Intersection observer for reveal animations
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.12 });
+  reveals.forEach(el => observer.observe(el));
+
+  // Countdown (optional enhancement — shows days until wedding in console)
+  const wedding = new Date('2026-10-10');
+  const today = new Date();
+  const days = Math.ceil((wedding - today) / (1000 * 60 * 60 * 24));
+  console.log(`${days} days until the big day! 🌺`);
+</script>
+</body>
+</html>
